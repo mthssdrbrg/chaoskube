@@ -41,6 +41,8 @@ type Chaoskube struct {
 	DryRun bool
 	// a function to retrieve the current time
 	Now func() time.Time
+	// number of seconds to wait before killing pods
+	GracePeriod *int64
 }
 
 var (
@@ -63,7 +65,7 @@ var (
 // * a time zone to apply to the aforementioned time-based filters
 // * a logger implementing logrus.FieldLogger to send log output to
 // * whether to enable/disable dry-run mode
-func New(client kubernetes.Interface, labels, annotations, namespaces labels.Selector, excludedWeekdays []time.Weekday, excludedTimesOfDay []util.TimePeriod, excludedDaysOfYear []time.Time, timezone *time.Location, logger log.FieldLogger, dryRun bool) *Chaoskube {
+func New(client kubernetes.Interface, labels, annotations, namespaces labels.Selector, excludedWeekdays []time.Weekday, excludedTimesOfDay []util.TimePeriod, excludedDaysOfYear []time.Time, timezone *time.Location, logger log.FieldLogger, dryRun bool, gracePeriod *int64) *Chaoskube {
 	return &Chaoskube{
 		Client:             client,
 		Labels:             labels,
@@ -76,6 +78,7 @@ func New(client kubernetes.Interface, labels, annotations, namespaces labels.Sel
 		Logger:             logger,
 		DryRun:             dryRun,
 		Now:                time.Now,
+		GracePeriod:        gracePeriod,
 	}
 }
 
@@ -171,7 +174,13 @@ func (c *Chaoskube) DeletePod(victim v1.Pod) error {
 		return nil
 	}
 
-	return c.Client.Core().Pods(victim.Namespace).Delete(victim.Name, nil)
+	// deleteopts := &metav1.DeleteOptions{GracePeriodSeconds: &secs}
+	deleteOpts := &metav1.DeleteOptions{}
+	if c.GracePeriod != nil {
+		deleteOpts.GracePeriodSeconds = c.GracePeriod
+	}
+
+	return c.Client.Core().Pods(victim.Namespace).Delete(victim.Name, deleteOpts)
 }
 
 // filterByNamespaces filters a list of pods by a given namespace selector.

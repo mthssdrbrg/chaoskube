@@ -34,6 +34,7 @@ var (
 	interval           time.Duration
 	dryRun             bool
 	debug              bool
+	gracePeriod        int64
 )
 
 func init() {
@@ -51,6 +52,7 @@ func init() {
 	kingpin.Flag("interval", "Interval between Pod terminations").Default("10m").DurationVar(&interval)
 	kingpin.Flag("dry-run", "If true, don't actually do anything.").Default("true").BoolVar(&dryRun)
 	kingpin.Flag("debug", "Enable debug logging.").BoolVar(&debug)
+	kingpin.Flag("grace-period", "Grace period to use when terminating pods").Int64Var(&gracePeriod)
 }
 
 func main() {
@@ -74,6 +76,7 @@ func main() {
 		"interval":           interval,
 		"dryRun":             dryRun,
 		"debug":              debug,
+		"gracePeriod":        gracePeriod,
 	}).Debug("reading config")
 
 	log.WithFields(log.Fields{
@@ -147,6 +150,7 @@ func main() {
 		parsedTimezone,
 		log.StandardLogger(),
 		dryRun,
+		&gracePeriod,
 	)
 
 	for {

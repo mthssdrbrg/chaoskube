@@ -40,6 +40,7 @@ func (suite *Suite) TestNew() {
 		excludedWeekdays   = []time.Weekday{time.Friday}
 		excludedTimesOfDay = []util.TimePeriod{util.TimePeriod{}}
 		excludedDaysOfYear = []time.Time{time.Now()}
+		gracePeriod        *int64
 	)
 
 	chaoskube := New(
@@ -53,6 +54,7 @@ func (suite *Suite) TestNew() {
 		time.UTC,
 		logger,
 		false,
+		gracePeriod,
 	)
 	suite.Require().NotNil(chaoskube)
 
@@ -66,6 +68,7 @@ func (suite *Suite) TestNew() {
 	suite.Equal(time.UTC, chaoskube.Timezone)
 	suite.Equal(logger, chaoskube.Logger)
 	suite.Equal(false, chaoskube.DryRun)
+	suite.Nil(chaoskube.GracePeriod)
 }
 
 func (suite *Suite) TestCandidates() {
@@ -525,6 +528,7 @@ func (suite *Suite) setup(labelSelector labels.Selector, annotations labels.Sele
 		timezone,
 		logger,
 		dryRun,
+		nil,
 	)
 }
 
